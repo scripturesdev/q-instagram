@@ -1,6 +1,12 @@
 <template>
   <q-page class="constrain q-pa-md">
-    <q-card class="card-post" flat bordered>
+    <q-card
+      v-for="post in posts"
+      :key="post.id"
+      class="card-post q-mb-md"
+      flat
+      bordered
+    >
       <q-item>
         <q-item-section avatar>
           <q-avatar>
@@ -10,26 +16,59 @@
 
         <q-item-section>
           <q-item-label class="text-bold">Scripturesdev</q-item-label>
-          <q-item-label caption> Gothenburg, Sweden </q-item-label>
+          <q-item-label caption> {{ post.location }} </q-item-label>
         </q-item-section>
       </q-item>
 
       <q-separator />
-      <q-img class="col" src="https://cdn.quasar.dev/img/parallax2.jpg" />
+      <q-img :src="post.imageUrl" />
       <q-card-section>
-        <div>Golden Gate Bridge</div>
-        <div class="text-caption text-grey">Jun 10 9:33AM</div>
+        <div>{{ post.caption }}</div>
+        <div class="text-caption">{{ niceDate(post.date) }}</div>
       </q-card-section>
     </q-card>
   </q-page>
 </template>
 
-<script>
-import { defineComponent } from "vue";
+<script setup>
+import { date } from "quasar";
+import { ref, computed } from 'vue';
 
-export default defineComponent({
-  name: "PageHome",
-});
+const posts = ref([
+  {
+    id: 1,
+    caption: "Golden gate Bridge",
+    date: 1691607808765,
+    location: "San Fransisco, US",
+    imageUrl: "https://cdn.quasar.dev/img/parallax2.jpg",
+  },
+  {
+    id: 2,
+    caption: "Golden gate Bridge",
+    date: 1691607808765,
+    location: "San Fransisco, US",
+    imageUrl: "https://cdn.quasar.dev/img/parallax2.jpg",
+  },
+  {
+    id: 3,
+    caption: "Golden gate Bridge",
+    date: 1691607808765,
+    location: "San Fransisco, US",
+    imageUrl: "https://cdn.quasar.dev/img/parallax2.jpg",
+  },
+  {
+    id: 4,
+    caption: "Golden gate Bridge",
+    date: 1691607808765,
+    location: "San Fransisco, US",
+    imageUrl: "https://cdn.quasar.dev/img/parallax2.jpg",
+  },
+])
+
+// cant used with computed with arguments. this is the same as the function below
+//function niceDate (value) {return date.formatDate(value, "MMMM D h:mmA")}
+const niceDate = (value) => { return date.formatDate(value, "MMMM D h:mmA") }
+
 </script>
 
 <style lang="scss">
