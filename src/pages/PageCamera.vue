@@ -63,7 +63,7 @@
 
 <script setup>
 import { uid } from "quasar";
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 //require("md-gum-polyfill");
 
 const post = ref({
@@ -99,9 +99,8 @@ onMounted(() => {
   imageCaptured.value = false;
 });
 
-//breaks app currently...
-onUnmounted(() => {
-  if (hasCameraSupport) {
+onBeforeUnmount(() => {
+  if (post.value.hasCameraSupport) {
     disableCamera();
   }
 });
