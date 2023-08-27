@@ -13,12 +13,27 @@
 
     <div class="text-center q-pa-md">
       <q-btn
+        v-if="post.hasCameraSupport"
         @click="captureImage"
-        round
         color="grey-10"
         icon="eva-camera"
         size="lg"
+        round
       />
+      <q-file
+        v-else
+        @input="captureImageFallback"
+        v-model="imageUpload"
+        accept="image/*"
+        label="Choose an image"
+        outlined
+        counter
+        use-chips
+      >
+        <template v-slot:prepend>
+          <q-icon name="eva-attach-outline" />
+        </template>
+      </q-file>
     </div>
     <div class="row justify-center q-ma-md">
       <q-input
@@ -48,7 +63,7 @@
 
 <script setup>
 import { uid } from "quasar";
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 //require("md-gum-polyfill");
 
 const post = ref({
@@ -57,11 +72,13 @@ const post = ref({
   location: "",
   photo: null,
   date: Date.now(),
+  hasCameraSupport: true,
 });
 
 const video = ref(null);
 const canvas = ref(null);
 const imageCaptured = ref(false);
+const imageUpload = ref([]);
 
 function initCamera() {
   navigator.mediaDevices
@@ -70,6 +87,11 @@ function initCamera() {
     })
     .then((stream) => {
       video.value.srcObject = stream;
+    })
+    .catch((error) => {
+      // this will catch ALL other errors to mean no camera support.
+      post.value.hasCameraSupport = false;
+      console.log("catch error:", post.value.hasCameraSupport);
     });
 }
 onMounted(() => {
@@ -77,13 +99,63 @@ onMounted(() => {
   imageCaptured.value = false;
 });
 
+//breaks app currently...
+onUnmounted(() => {
+  if (hasCameraSupport) {
+    disableCamera();
+  }
+});
+
+// capture image from camera stream
 function captureImage() {
   canvas.value.width = video.value.getBoundingClientRect().width;
   canvas.value.height = video.value.getBoundingClientRect().height;
   let context = canvas.value.getContext("2d");
   context.drawImage(video.value, 0, 0, canvas.value.width, canvas.value.height);
   imageCaptured.value = true;
-  canvas.value.post.photo = canvas.value.toDataURL();
+  post.value.photo = dataURItoBlob(canvas.value.toDataURL());
+  disableCamera();
+}
+
+// for those that dont have camera support - upload picture
+// argument comes in the form of event,
+// hence to reach the file its ev.target.files[0] for the first file.
+function captureImageFallback(ev) {
+  post.value.photo = ev.target.files[0];
+  let context = canvas.value.getContext("2d");
+  // from stackoverflow - upload image to canvas
+  let reader = new FileReader();
+  reader.onload = (event) => {
+    let img = new Image();
+    img.onload = () => {
+      canvas.value.width = img.width;
+      canvas.value.height = img.height;
+      context.drawImage(img, 0, 0);
+      imageCaptured.value = true;
+    };
+    img.src = event.target.result;
+  };
+  reader.readAsDataURL(post.value.photo);
+}
+
+function disableCamera() {
+  video.value.srcObject.getTracks().forEach((track) => {
+    track.stop();
+  });
+  video.value.srcObject = null;
+}
+
+// from online convert to blob
+function dataURItoBlob(dataURI) {
+  let byteString = atob(dataURI.split(",")[1]);
+  var mimeString = dataURI.split(",")[0].split(":")[1].split(";")[0];
+  var ab = new ArrayBuffer(byteString.length);
+  var ia = new Uint8Array(ab);
+  for (var i = 0; i < byteString.length; i++) {
+    ia[i] = byteString.charCodeAt(i);
+  }
+  var blob = new Blob([ab], { type: mimeString });
+  return blob;
 }
 </script>
 

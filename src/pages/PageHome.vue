@@ -26,7 +26,9 @@
           <q-img :src="post.imageUrl" />
           <q-card-section>
             <div>{{ post.caption }}</div>
-            <div class="text-caption text-grey">{{ niceDate(post.date) }}</div>
+            <div class="text-caption text-grey">
+              {{ date.formatDate(post.date, "MMMM D h:mmA") }}
+            </div>
           </q-card-section>
         </q-card>
       </div>
@@ -86,9 +88,9 @@ const posts = ref([
 
 // cant used with computed with arguments. this is the same as the function below
 //function niceDate (value) {return date.formatDate(value, "MMMM D h:mmA")}
-const niceDate = (value) => {
-  return date.formatDate(value, "MMMM D h:mmA");
-};
+// const niceDate = (value) => {
+//   return date.formatDate(value, "MMMM D h:mmA");
+// };
 </script>
 
 <style lang="scss">
