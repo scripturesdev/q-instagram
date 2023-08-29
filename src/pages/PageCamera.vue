@@ -45,13 +45,21 @@
     </div>
     <div class="row justify-center q-ma-md">
       <q-input
+        :loading="post.locationLoading"
         class="col col-sm-6"
         v-model="post.location"
         label="location"
         dense
       >
         <template v-slot:append>
-          <q-btn round dense flat icon="eva-navigation-2-outline" />
+          <q-btn
+            v-if="!post.locationLoading && locationSupported"
+            @click="getLocation"
+            round
+            dense
+            flat
+            icon="eva-navigation-2-outline"
+          />
         </template>
       </q-input>
     </div>
@@ -63,9 +71,11 @@
 
 <script setup>
 import { uid } from "quasar";
-import { ref, computed, onMounted, onBeforeUnmount } from "vue";
-//require("md-gum-polyfill");
+import { ref, onMounted, onBeforeUnmount } from "vue";
+import axios from "axios";
+import { useQuasar } from "quasar";
 
+//require("md-gum-polyfill");
 const post = ref({
   id: uid(),
   caption: "",
@@ -73,6 +83,7 @@ const post = ref({
   photo: null,
   date: Date.now(),
   hasCameraSupport: true,
+  locationLoading: false,
 });
 
 const video = ref(null);
@@ -91,7 +102,7 @@ function initCamera() {
     .catch((error) => {
       // this will catch ALL other errors to mean no camera support.
       post.value.hasCameraSupport = false;
-      console.log("catch error:", post.value.hasCameraSupport);
+      //console.log("catch error:", post.value.hasCameraSupport);
     });
 }
 onMounted(() => {
@@ -155,6 +166,58 @@ function dataURItoBlob(dataURI) {
   }
   var blob = new Blob([ab], { type: mimeString });
   return blob;
+}
+
+function getLocation() {
+  post.value.locationLoading = true;
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      console.log("position", position);
+      getCityAndCountry(position);
+    },
+    (err) => {
+      console.log("err:", err);
+      locationError();
+      post.value.locationLoading = false;
+    },
+    { timeout: 7000 } // if cant get location then timeout
+  );
+}
+
+// works but the geocode is 1 api call / min limited for free tier.
+// apikey=&auth=662945502730805409680x77334
+// try out google maps free tier (500 api calls / day)
+function getCityAndCountry(position) {
+  console.log("in getcityandcountry");
+  let apiURL = `https://geocode.xyz/${position.coords.latitude},${position.coords.longitude}?json=1`;
+  axios
+    .get(apiURL)
+    .then((result) => {
+      console.log(result);
+      post.value.location = result.data.city;
+      if (result.data.country) {
+        post.value.location += `, ${result.data.country}`;
+      }
+      post.value.locationLoading = false;
+    })
+    .catch((err) => {
+      console.log("error:", err);
+      locationError();
+      post.value.locationLoading = false;
+    });
+}
+const $q = useQuasar();
+
+function locationError() {
+  $q.dialog({
+    title: "Error",
+    message: "Could not find your location",
+  });
+}
+
+function locationSupported() {
+  if ("geolocation" in navigator) return true;
+  return false;
 }
 </script>
 

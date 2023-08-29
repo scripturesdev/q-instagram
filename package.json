@@ -15,6 +15,7 @@
   "dependencies": {
     "@quasar/extras": "^1.16.4",
     "axiom": "^0.1.6",
+    "axios": "^1.5.0",
     "md-gum-polyfill": "^1.0.0",
     "quasar": "^2.12.4",
     "vue": "^3.0.0",
